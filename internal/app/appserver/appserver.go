@@ -28,6 +28,7 @@ func (server *AppServer) Start() error {
 	}
 	server.configureRouter()
 	server.logger.Info("server start listen")
+
 	return http.ListenAndServe(server.config.BindAddr, server.router)
 }
 
