@@ -9,7 +9,7 @@ import (
 
 var configPath string
 
-func init()  {
+func init() {
 	flag.StringVar(&configPath, "config-path", "config/appserver.toml", "path to config file")
 }
 
@@ -23,7 +23,7 @@ func main() {
 	}
 
 	server := appserver.New(config)
-	err = server.Start();
+	err = server.Start()
 	if err!=nil {
 		log.Fatal(err)
 	}

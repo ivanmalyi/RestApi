@@ -42,12 +42,12 @@ func (server *AppServer)configureLogger() error {
 	return nil
 }
 
-func (server *AppServer) configureRouter()  {
+func (server *AppServer) configureRouter() {
 	server.router.HandleFunc("/hello", server.HandleHello())
 }
 
 func (server *AppServer) HandleHello() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		io.WriteString(writer, "hello world")
+		_, _ = io.WriteString(writer, "hello world")
 	}
 }
