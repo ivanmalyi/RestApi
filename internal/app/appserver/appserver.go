@@ -2,6 +2,7 @@ package appserver
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/ivanmalyi/RestApi/internal/app/store"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ type AppServer struct {
 	config *Config
 	logger *logrus.Logger
 	router *mux.Router
+	store *store.Store
 }
 
 func New(config *Config)*AppServer {
@@ -19,17 +21,6 @@ func New(config *Config)*AppServer {
 		logger: logrus.New(),
 		router: mux.NewRouter(),
 	}
-}
-
-func (server *AppServer) Start() error {
-	err := server.configureLogger()
-	if err != nil {
-		return err
-	}
-	server.configureRouter()
-	server.logger.Info("server start listen")
-
-	return http.ListenAndServe(server.config.BindAddr, server.router)
 }
 
 func (server *AppServer)configureLogger() error {
@@ -44,6 +35,33 @@ func (server *AppServer)configureLogger() error {
 
 func (server *AppServer) configureRouter() {
 	server.router.HandleFunc("/hello", server.HandleHello())
+}
+
+func (server *AppServer) configureStore() error {
+	storeConn := store.New(server.config.Store)
+	err := storeConn.Open()
+	if err != nil {
+		return err
+	}
+
+	server.store = storeConn
+
+	return nil
+}
+
+func (server *AppServer) Start() error {
+	err := server.configureLogger()
+	if err != nil {
+		return err
+	}
+	server.configureRouter()
+	server.logger.Info("server start listen")
+
+	err = server.configureStore()
+	if err != nil {
+		return err
+	}
+	return http.ListenAndServe(server.config.BindAddr, server.router)
 }
 
 func (server *AppServer) HandleHello() http.HandlerFunc {
