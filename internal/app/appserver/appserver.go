@@ -1,71 +1,33 @@
 package appserver
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/ivanmalyi/RestApi/internal/app/store"
-	"github.com/sirupsen/logrus"
-	"io"
+	"database/sql"
+	"github.com/ivanmalyi/RestApi/internal/app/store/sqlstore"
 	"net/http"
 )
 
-type AppServer struct {
-	config *Config
-	logger *logrus.Logger
-	router *mux.Router
-	store *store.Store
-}
-
-func New(config *Config)*AppServer {
-	return &AppServer{
-		config: config,
-		logger: logrus.New(),
-		router: mux.NewRouter(),
-	}
-}
-
-func (server *AppServer)configureLogger() error {
-	level, err := logrus.ParseLevel(server.config.LogLevel)
+func Start(config *Config) error {
+	db, err := newDB(config.DatabaseUrl)
 	if err != nil {
 		return err
 	}
-	server.logger.SetLevel(level)
+	defer db.Close()
 
-	return nil
+	store := sqlstore.New(db)
+	server := NewServer(store)
+	return http.ListenAndServe(config.BindAddr, server)
 }
 
-func (server *AppServer) configureRouter() {
-	server.router.HandleFunc("/hello", server.HandleHello())
-}
-
-func (server *AppServer) configureStore() error {
-	storeConn := store.New(server.config.Store)
-	err := storeConn.Open()
+func newDB(databaseUrl string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", databaseUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	server.store = storeConn
-
-	return nil
-}
-
-func (server *AppServer) Start() error {
-	err := server.configureLogger()
+	err = db.Ping()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	server.configureRouter()
-	server.logger.Info("server start listen")
 
-	err = server.configureStore()
-	if err != nil {
-		return err
-	}
-	return http.ListenAndServe(server.config.BindAddr, server.router)
-}
-
-func (server *AppServer) HandleHello() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = io.WriteString(writer, "hello world")
-	}
+	return db, nil
 }

@@ -22,8 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server := appserver.New(config)
-	err = server.Start()
+	err = appserver.Start(config)
 	if err!=nil {
 		log.Fatal(err)
 	}
