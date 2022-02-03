@@ -7,7 +7,18 @@ type UserRepository struct {
 }
 
 func (userRepository *UserRepository) Create(user *model.User) (*model.User, error)  {
-	err := userRepository.store.db.QueryRow(
+	var err error
+	err = user.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	err = user.BeforeCreate()
+	if err != nil {
+		return nil, err
+	}
+
+	err = userRepository.store.db.QueryRow(
 		`insert into users (email, encrypted_password) values ($1, $2) RETURNING id`,
     	user.Email, user.EncryptedPassword,
 		).Scan(&user.ID)
