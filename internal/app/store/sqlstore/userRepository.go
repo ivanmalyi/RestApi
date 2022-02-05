@@ -10,7 +10,7 @@ type UserRepository struct {
 	store *Store
 }
 
-func (userRepository *UserRepository) Create(user *model.User) error  {
+func (userRepository *UserRepository) Create(user *model.User) error {
 	var err error
 	err = user.Validate()
 	if err != nil {
@@ -36,6 +36,25 @@ func (userRepository *UserRepository) FindByEmail(email string) (*model.User, er
 		from users
 		where email = $1`,
 		email,
+	).Scan(&user.ID, &user.Email, &user.EncryptedPassword)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, store.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
+func (userRepository *UserRepository) Find(id int) (*model.User, error)  {
+	user := &model.User{}
+
+	err := userRepository.store.db.QueryRow(
+		`select id, email, encrypted_password 
+		from users
+		where id = $1`,
+		id,
 	).Scan(&user.ID, &user.Email, &user.EncryptedPassword)
 
 	if err != nil {

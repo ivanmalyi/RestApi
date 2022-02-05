@@ -3,6 +3,7 @@ package store
 import "github.com/ivanmalyi/RestApi/internal/app/model"
 
 type UserRepository interface {
-	Create(user *model.User) error
-	FindByEmail(email string) (*model.User, error)
+	Create(*model.User) error
+	FindByEmail(string) (*model.User, error)
+	Find(int) (*model.User, error)
 }
